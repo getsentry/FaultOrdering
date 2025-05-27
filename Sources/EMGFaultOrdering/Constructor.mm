@@ -6,7 +6,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import <vector>
 #import <mach/mach.h>
 #import <mach-o/dyld.h>
@@ -17,8 +16,7 @@
 #import <os/log.h>
 #import <sys/sysctl.h>
 #include <SimpleDebugger.h>
-
-void parseLinkMapFile(NSString *filePath, intptr_t slide, vm_address_t sectionStart, unsigned long sectionSize, void (*callback)(UInt64));
+#import "EMGObjCHelper.h"
 
 bool parseFunctionStarts(const struct mach_header_64 *header, intptr_t slide, vm_address_t sectionStart, unsigned long sectionSize, void (*callback)(UInt64));
 
@@ -28,6 +26,7 @@ bool parseFunctionStarts(const struct mach_header_64 *header, intptr_t slide, vm
 
 NSMutableArray<NSDictionary *> *loadedImages;
 std::vector<uint64_t> *accessedAddresses;
+NSObject *server;
 
 kern_return_t my_task_set_exception_ports
 (
@@ -46,26 +45,17 @@ kern_return_t my_task_set_exception_ports
 }
 DYLD_INTERPOSE(my_task_set_exception_ports, task_set_exception_ports)
 
-void printAddresses() {
+NSData* getAddresses() {
   NSMutableArray *arraySamples = [NSMutableArray new];
   for(uint64_t addr : *accessedAddresses) {
     [arraySamples addObject:@(addr)];
   }
   NSDictionary *result = @{
     @"loadedImages": loadedImages,
-    @"samples": @[@{@"backtrace": arraySamples}],
+    @"addresses": arraySamples,
   };
   
-  NSData *data = [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
-  NSURL *documentsURL = [[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask][0];
-  NSURL *emergeDirectoryURL = [documentsURL URLByAppendingPathComponent:@"emerge-output"];
-  if (![[NSFileManager defaultManager] fileExistsAtPath:emergeDirectoryURL.path isDirectory:NULL]) {
-      [[NSFileManager defaultManager] createDirectoryAtURL:emergeDirectoryURL withIntermediateDirectories:YES attributes:nil error:nil];
-  }
-  NSString *fileName = @"fault-order.json";
-  NSURL *outputURL = [emergeDirectoryURL URLByAppendingPathComponent:fileName];
-  NSLog(@"Emerge fault order file url: %@", outputURL);
-  [data writeToURL:outputURL atomically:YES];
+  return [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
 }
 
 bool isDebuggerAttached() {
@@ -82,7 +72,6 @@ bool isDebuggerAttached() {
 }
 
 void debuggerCallback(mach_port_t thread, arm_thread_state64_t state, std::function<void(bool removeBreak)> sendReply);
-void badAccessCallback(mach_port_t thread, arm_thread_state64_t state);
 
 class V2Handler {
 
@@ -100,7 +89,6 @@ public:
   V2Handler() {
     handler = new SimpleDebugger();
     handler->setExceptionCallback(debuggerCallback);
-    handler->setBadAccessCallback(badAccessCallback);
     handler->startDebugging();
   }
 };
@@ -108,27 +96,6 @@ public:
 void handleFunctionAddress(UInt64 addr) {
   V2Handler::getInstance().handler->setBreakpoint(addr);
 }
-
-void protectSection(const struct mach_header_64 *header, const char* segment, const char* section, vm_prot_t newProtection) {
-  unsigned long section_size = 0;
-  uint8_t *section_start = getsectiondata(header, segment, section, &section_size);
-
-  // reduce the size to account for us making the sections two pages smaller
-  // to guarantee our sections are contained within full pages, we move the start of the section
-  // forward by a page, and move the end backwards by a page
-  intptr_t new_size = section_size - (vm_page_size * 2);
-  if (new_size < 0) {
-      os_log(OS_LOG_DEFAULT, "Skipping protection of %s%s because it is not big enough to guarantee that it is contained within it's own unqiue pages", segment, section);
-      return;
-  }
-
-  kern_return_t result = vm_protect(mach_task_self(), (vm_address_t) section_start + vm_page_size, new_size, 0, newProtection);
-  if (result != 0) {
-    os_log(OS_LOG_DEFAULT, "error vm protect");
-  }
-}
-
-bool usingFullPageProtection = false;
 
 void image_added(const struct mach_header* mh, intptr_t slide) {
   Dl_info info = {0};
@@ -148,48 +115,35 @@ void image_added(const struct mach_header* mh, intptr_t slide) {
   unsigned long section_size = 0;
   vm_address_t section = (vm_address_t) getsectiondata((mach_header_64 *) mh, segname, sectname, &section_size);
 
-  NSString *linkmapPath = [NSBundle.mainBundle pathForResource:@"Linkmap" ofType:@"txt"];
-  if (linkmapPath) {
-    parseLinkMapFile(linkmapPath, slide, section, section_size, &handleFunctionAddress);
-  } else {
-    bool hasFunctionStarts = parseFunctionStarts((mach_header_64 *) mh, slide, section, section_size, &handleFunctionAddress);
-    if (!hasFunctionStarts) {
-      const char *textSegment = "__TEXT";
-      const char *textSection = "__text";
-      usingFullPageProtection = true;
-      protectSection((const struct mach_header_64 *)mh, textSegment, textSection, VM_PROT_READ);
+  
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *documentsDirectory = [paths firstObject];
+  NSString *filePath = [documentsDirectory stringByAppendingPathComponent:@"linkmap-addresses.json"];
+  if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+    NSData *data = [NSData dataWithContentsOfFile:filePath];
+    NSArray *addresses = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    for (NSNumber *n in addresses) {
+      handleFunctionAddress(slide + n.unsignedIntegerValue);
     }
+  } else {
+//    NSString *linkmapPath = [NSBundle.mainBundle pathForResource:@"Linkmap" ofType:@"txt"];
+//    if (linkmapPath) {
+//      NSLog(@"has linkmap");
+//      // TODO: Request this from the server
+//      // parseLinkMapFile(linkmapPath, slide, section, section_size, &handleFunctionAddress);
+//    } else {
+      NSLog(@"does not have linkmap");
+      bool hasFunctionStarts = parseFunctionStarts((mach_header_64 *) mh, slide, section, section_size, &handleFunctionAddress);
+      if (!hasFunctionStarts) {
+        NSLog(@"No function starts, faults will not be measured");
+      }
+//    }
   }
 }
 
 void debuggerCallback(mach_port_t thread, arm_thread_state64_t state, std::function<void(bool removeBreak)> sendReply) {
     V2Handler::getInstance().accessedAddresses->push_back(state.__pc);
     sendReply(true);
-}
-
-vm_address_t pageAlign(vm_address_t address) {
-  return address - address % 16384;
-}
-
-void badAccessCallback(mach_port_t thread, arm_thread_state64_t state) {
-  if (!usingFullPageProtection) {
-    return;
-  }
-
-  _STRUCT_MCONTEXT64 machineContext;
-  mach_msg_type_number_t stateCountBuff = ARM_THREAD_STATE64_COUNT;
-  stateCountBuff = ARM_EXCEPTION_STATE64_COUNT;
-  kern_return_t kr = thread_get_state(thread, ARM_EXCEPTION_STATE64, (thread_state_t)&machineContext.__es, &stateCountBuff);
-  if(kr != KERN_SUCCESS) {
-    os_log(OS_LOG_DEFAULT, "Get exception state error");
-  }
-  uint64_t address = machineContext.__es.__far;
-  uint64_t pageAddress = pageAlign(address);
-  kr = vm_protect(mach_task_self(), pageAddress, (vm_size_t) 2, 0, VM_PROT_READ | VM_PROT_EXECUTE);
-  if (kr != KERN_SUCCESS) {
-    os_log(OS_LOG_DEFAULT, "vm protect error: %d", kr);
-  }
-  V2Handler::getInstance().accessedAddresses->push_back(address);
 }
 
 int readULEB128(const uint8_t *p, uint64_t *out) {
@@ -261,53 +215,32 @@ bool parseFunctionStarts(const struct mach_header_64 *header, intptr_t slide, vm
     return true;
 }
 
-void parseLinkMapFile(NSString *filePath, intptr_t slide, vm_address_t sectionStart, unsigned long sectionSize, void (*callback)(UInt64)) {
-  FILE *file = fopen([filePath UTF8String], "r");
-  char buffer[256];
-  BOOL inTextSection = NO;
-
-  while (fgets(buffer, sizeof(buffer), file) != NULL) {
-    if (buffer[255]) {
-      bzero(buffer, sizeof(char)*256);
-      continue;
-    }
-    size_t lineLength = strnlen(buffer, sizeof(buffer));
-    if (lineLength > 0 && buffer[lineLength - 1] == '\n') {
-        buffer[lineLength - 1] = '\0';
-    }
-
-    if (!inTextSection) {
-        if (strstr(buffer, "# Symbols:")) {
-            inTextSection = true;
-        }
-        continue;
-    }
-
-    if (strncmp(buffer, "0x", 2) == 0) {
-      char *address = strtok(buffer, "\t");
-      strtok(NULL, "\t");
-      const char *symbol = strtok(NULL, "\t");
-      if (symbol) {
-        const char *substringStart = strstr(symbol, "] ");
-        symbol = substringStart + 2;
-        if (symbol[0] != 'l' && !strstr(symbol, "_OUTLINED_")) {
-          UInt64 length = strtoull(address + 2, NULL, 16);
-          UInt64 addr = slide + length;
-
-          if (addr >= sectionStart && addr < sectionStart + sectionSize) {
-            callback(addr);
-          } else {
-            break;
-          }
-        }
-      }
-    }
-  }
-  fclose(file);
-}
-
 __attribute__((constructor)) void setup(void);
 __attribute__((constructor)) void setup() {
+  NSLog(@"starting fault order");
+  const char *envValue = getenv("RUN_FAULT_ORDER");
+  const char *envValueSetup = getenv("RUN_FAULT_ORDER_SETUP");
+  bool isEnabled = envValue != NULL && strcmp(envValue, "1") == 0;
+  bool isSetupEnabled = envValueSetup != NULL && strcmp(envValueSetup, "1") == 0;
+  if (isSetupEnabled) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+      // Run setup
+      NSData *linkmapData = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"http://localhost:38825/linkmap"]];
+      if (linkmapData) {
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *documentsDirectory = [paths firstObject];
+        NSString *filePath = [documentsDirectory stringByAppendingPathComponent:@"linkmap-addresses.json"];
+        [linkmapData writeToFile:filePath atomically:YES];
+      } else {
+        NSLog(@"Could not get linkmap data");
+      }
+    });
+    return;
+  } else if (!isEnabled) {
+    NSLog(@"Fault ordering is not enabled");
+    return;
+  }
+
   loadedImages = [NSMutableArray new];
   accessedAddresses = new std::vector<uint64_t>();
 
@@ -324,12 +257,8 @@ __attribute__((constructor)) void setup() {
     @"loadAddress": @((__uint64_t) header),
   }];
 
-  [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 120 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-      printAddresses();
-      NSLog(@"Fault Order File written, exiting app");
-      _exit(0);
-    });
+  server = [EMGObjCHelper startServerWithCallback:^NSData *{
+    return getAddresses();
   }];
 
   if (!isDebuggerAttached()) {
