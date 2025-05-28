@@ -1,5 +1,5 @@
 //
-//  EMGServerHelper.h
+//  EMGObjcHelper.h
 //  EMGFaultOrdering
 //
 //  Created by Noah Martin on 5/17/25.

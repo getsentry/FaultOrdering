@@ -10,7 +10,7 @@ import FlyingFox
 
 @objc(EMGServer)
 public final class Server: NSObject, Sendable {
-  
+
   @objc
   public init(callback: @escaping @Sendable () -> Data) {
     server = HTTPServer(address: .loopback(port: 38824))

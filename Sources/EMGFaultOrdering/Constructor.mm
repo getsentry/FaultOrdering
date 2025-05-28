@@ -1,5 +1,5 @@
 //
-//  Constructor.m
+//  Constructor.mm
 //  emergeFaultOrdering
 //
 //  Created by Noah Martin on 8/1/21.
@@ -27,6 +27,7 @@ bool parseFunctionStarts(const struct mach_header_64 *header, intptr_t slide, vm
 NSMutableArray<NSDictionary *> *loadedImages;
 std::vector<uint64_t> *accessedAddresses;
 NSObject *server;
+SimpleDebugger *debugger;
 
 kern_return_t my_task_set_exception_ports
 (
@@ -71,30 +72,8 @@ bool isDebuggerAttached() {
   return proc->kp_proc.p_flag & P_TRACED;
 }
 
-void debuggerCallback(mach_port_t thread, arm_thread_state64_t state, std::function<void(bool removeBreak)> sendReply);
-
-class V2Handler {
-
-public:
-  SimpleDebugger *handler;
-  std::vector<uint64_t> *accessedAddresses;
-
-  // Static method to provide access to the single instance
-  static V2Handler& getInstance() {
-      // Lazy instantiation (created the first time it's accessed)
-      static V2Handler instance;
-      return instance;
-  }
-
-  V2Handler() {
-    handler = new SimpleDebugger();
-    handler->setExceptionCallback(debuggerCallback);
-    handler->startDebugging();
-  }
-};
-
 void handleFunctionAddress(UInt64 addr) {
-  V2Handler::getInstance().handler->setBreakpoint(addr);
+  debugger->setBreakpoint(addr);
 }
 
 void image_added(const struct mach_header* mh, intptr_t slide) {
@@ -126,23 +105,16 @@ void image_added(const struct mach_header* mh, intptr_t slide) {
       handleFunctionAddress(slide + n.unsignedIntegerValue);
     }
   } else {
-//    NSString *linkmapPath = [NSBundle.mainBundle pathForResource:@"Linkmap" ofType:@"txt"];
-//    if (linkmapPath) {
-//      NSLog(@"has linkmap");
-//      // TODO: Request this from the server
-//      // parseLinkMapFile(linkmapPath, slide, section, section_size, &handleFunctionAddress);
-//    } else {
-      NSLog(@"does not have linkmap");
-      bool hasFunctionStarts = parseFunctionStarts((mach_header_64 *) mh, slide, section, section_size, &handleFunctionAddress);
-      if (!hasFunctionStarts) {
-        NSLog(@"No function starts, faults will not be measured");
-      }
-//    }
+    NSLog(@"does not have linkmap");
+    bool hasFunctionStarts = parseFunctionStarts((mach_header_64 *) mh, slide, section, section_size, &handleFunctionAddress);
+    if (!hasFunctionStarts) {
+      NSLog(@"No function starts, faults will not be measured");
+    }
   }
 }
 
 void debuggerCallback(mach_port_t thread, arm_thread_state64_t state, std::function<void(bool removeBreak)> sendReply) {
-    V2Handler::getInstance().accessedAddresses->push_back(state.__pc);
+    accessedAddresses->push_back(state.__pc);
     sendReply(true);
 }
 
@@ -217,7 +189,6 @@ bool parseFunctionStarts(const struct mach_header_64 *header, intptr_t slide, vm
 
 __attribute__((constructor)) void setup(void);
 __attribute__((constructor)) void setup() {
-  NSLog(@"starting fault order");
   const char *envValue = getenv("RUN_FAULT_ORDER");
   const char *envValueSetup = getenv("RUN_FAULT_ORDER_SETUP");
   bool isEnabled = envValue != NULL && strcmp(envValue, "1") == 0;
@@ -243,6 +214,9 @@ __attribute__((constructor)) void setup() {
 
   loadedImages = [NSMutableArray new];
   accessedAddresses = new std::vector<uint64_t>();
+  debugger = new SimpleDebugger();
+  debugger->setExceptionCallback(debuggerCallback);
+  debugger->startDebugging();
 
   // Add dyld load address since `_dyld_register_func_for_add_image` is not called for
   // dyld itself.
@@ -265,7 +239,6 @@ __attribute__((constructor)) void setup() {
     printf("The debugger is not attached\n");
     abort();
   }
-  V2Handler::getInstance().accessedAddresses = accessedAddresses;
   usleep(500000);
   _dyld_register_func_for_add_image(image_added);
 }
