@@ -16,7 +16,7 @@ This is a multi-step process:
 2. Copy that linkmap file into the UI test bundle resources
 3. Setup and run the UI test, which then outputs the final order file
 
-### Generating a linkmap
+### Generating the linkmap
 
 To use this package you'll need to generate a linkmap for your main app binary. In your app's Xcode target, set the following build settings:
 
@@ -35,7 +35,7 @@ Once the `Linkmap.txt` file exists, it needs to be included as a resource in you
 
 <img src="images/copy.png" width="600" alt="Copy Bundle Resources">
 
-<img src="images/choose.png" width="300" alt="Choose File">
+<img src="images/choose.png" width="400" alt="Choose File">
 Choose "Add Other" and browse to where you generated the file. You may need to create the file first, by building your main app target once with the new build settings.
 
 <img src="images/confirm.png" width="600" alt="Confirm">
