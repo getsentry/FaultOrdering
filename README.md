@@ -9,16 +9,24 @@ Create a UI testing target using XCUITest. Add the package dependency to your Xc
 Add `FaultOrderingTests` and `FaultOredering` as a dependency of your new UI test target.
 
 ### Linkmaps
-To use this package you’ll need to generate a linkmap for your main app binary. In your xcode target build settings set the following flags:
+To use this package you’ll need to generate a linkmap for your main app binary. In your xcode target for your applications main executable set the following build settings:
 ```
 LD_GENERATE_MAP_FILE = YES
-LD_MAP_FILE_PATH = PATH_TO_YOUR_UI_TEST/Linkmap.txt
+LD_MAP_FILE_PATH = $(PROJECT_DIR)/Linkmap.txt
 ```
 
-The linkmap should be copied into your UI test target. Add it in the build phases for your target under Copy Bundle Resources. 
+The Linkmap.txt file needs to be included as a resource in your UI test target. Add it in the build phases for your target under Copy Bundle Resources.
+
+![Copy Bundle Resources](images/copy.png)
+
+![Choose File](images/choose.png)
+Choose "Add Other" and brows to the file in your project directory. You may need to create the file first, by building your main app target once with the new build settings. 
+
+![Confirm](images/confirm.png)
+Confirm your selection and **do not** check the box to copy the file.
 
 > [!IMPORTANT]
-> The linkmap file must be included in our UI test target. Ensure the LD_MAP_FILE_PATH is set to the file that you include in Copy Bundle Resources. 
+> The generated Linkmap.txt file must be included in your UI test target. You don't need to specificly use "$(PROJECT_DIR)/Linkmap.txt" as the path, only that whatever the LD_MAP_FILE_PATH is set is also the file that you include in Copy Bundle Resources.
 
 ## Usage
 
