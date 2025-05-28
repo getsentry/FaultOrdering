@@ -35,14 +35,14 @@ Once the `Linkmap.txt` file exists, it needs to be included as a resource in you
 
 <img src="images/copy.png" width="600" alt="Copy Bundle Resources">
 
-<img src="images/choose.png" width="600" alt="Choose File">
+<img src="images/choose.png" width="300" alt="Choose File">
 Choose "Add Other" and browse to where you generated the file. You may need to create the file first, by building your main app target once with the new build settings.
 
 <img src="images/confirm.png" width="600" alt="Confirm">
-Confirm your selection and **do not** check the box to copy the file.
+Confirm your selection and <strong>do not</strong> check the box to copy the file.
 
 > [!IMPORTANT]
-> The generated Linkmap.txt file must be included in your UI test target. You don't need to specificly use "$(PROJECT_DIR)/Linkmap.txt" as the path, only that whatever the LD_MAP_FILE_PATH is set is also the file that you include in Copy Bundle Resources.
+> The generated Linkmap.txt file must be included in your UI test target. You don't need to specificly use `"$(PROJECT_DIR)/Linkmap.txt"` as the path, only that whatever the `LD_MAP_FILE_PATH` is set is also the file that you include in Copy Bundle Resources.
 
 ### Running the test
 
