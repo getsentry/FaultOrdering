@@ -1,38 +1,52 @@
 # FaultOrdering
 
-Order files can reduce app startup time by co-locating symbols that are accessed during app launch, reducing overall memory used by the app code. This package generates an order
+Order files can reduce app startup time by co-locating symbols that are accessed during app launch, reducing the number of page faults from the app. This package generates an order
 file by launching the app in an XCUITest. Read all about how order files work in [our blog post](https://www.emergetools.com/blog/posts/FasterAppStartupOrderFiles).
 
 ## Installation
 
 Create a UI testing target using XCUITest. Add the package dependency to your Xcode project using the URL of this repository (https://github.com/getsentry/FaultOrdering).
-Add `FaultOrderingTests` and `FaultOredering` as a dependency of your new UI test target.
+Add `FaultOrderingTests` and `FaultOrdering` as a dependency of your new UI test target.
 
-### Linkmaps
-To use this package you’ll need to generate a linkmap for your main app binary. In your xcode target for your applications main executable set the following build settings:
+## Usage
+
+This is a multi-step process:
+
+1. Generate a linkmap file for your main app
+2. Copy that linkmap file into the UI test bundle resources
+3. Setup and run the UI test, which then outputs the final order file
+
+### Generating a linkmap
+
+To use this package you'll need to generate a linkmap for your main app binary. In your app's Xcode target, set the following build settings:
+
 ```
 LD_GENERATE_MAP_FILE = YES
 LD_MAP_FILE_PATH = $(PROJECT_DIR)/Linkmap.txt
 ```
 
-The Linkmap.txt file needs to be included as a resource in your UI test target. Add it in the build phases for your target under Copy Bundle Resources.
+We recommend using `$(PROJECT_DIR)` so that it generates within your project directory instead of derived data, but this can be changed to whatever makes sense for your setup.
 
-![Copy Bundle Resources](images/copy.png)
+After adding these settings, make sure to build your app and verify the file exists.
 
-![Choose File](images/choose.png)
-Choose "Add Other" and brows to the file in your project directory. You may need to create the file first, by building your main app target once with the new build settings. 
+### Including the linkmap
 
-![Confirm](images/confirm.png)
+After generating the `Linkmap.txt` file, it needs to be included as a resource in your UI test target. Add it in the build phases for your target under Copy Bundle Resources.
+
+<img src="images/copy.png" width="600" alt="Copy Bundle Resources">
+
+<img src="images/choose.png" width="600" alt="Choose File">
+Choose "Add Other" and browse to where you generated the file. You may need to create the file first, by building your main app target once with the new build settings.
+
+<img src="images/confirm.png" width="600" alt="Confirm">
 Confirm your selection and **do not** check the box to copy the file.
 
 > [!IMPORTANT]
 > The generated Linkmap.txt file must be included in your UI test target. You don't need to specificly use "$(PROJECT_DIR)/Linkmap.txt" as the path, only that whatever the LD_MAP_FILE_PATH is set is also the file that you include in Copy Bundle Resources.
 
-## Usage
+### Running the test
 
-Create an instance of FaultOrderingTest and provide a closure to performan any setup. The setup closure will be called before generating the order file
-so you can put the app in a state that users commonly see. For example, you may want to log in to the app. Then the order file will generate
-for the codepaths your app uses when users are logged in.
+In a UI test, create an instance of `FaultOrderingTest` and optionally provide a closure to perform any required app setup. For example, you may want to log in to the app since that's the most common code path for the majority of your app users. The test case can then be executed.
 
 Example:
 
@@ -46,8 +60,8 @@ test.testApp(testCase: self, app: app)
 
 ### Accessing results
 
-Results are added as a XCTAttachment named "order-file"
+Results are added as a XCTAttachment named `"order-file"`.
 
 ### Device support
 
-To run on a physical device the app must link to the `FaultOrdering` product from this package. Update your main app target to have this framework in it’s embedded frameworks.
+To run on a physical device the app must link to the `FaultOrdering` product from this package. Update your main app target to have this framework in it's embedded frameworks.
