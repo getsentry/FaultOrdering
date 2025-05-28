@@ -31,7 +31,7 @@ After adding these settings, make sure to build your app and verify the file exi
 
 ### Including the linkmap
 
-After generating the `Linkmap.txt` file, it needs to be included as a resource in your UI test target. Add it in the build phases for your target under Copy Bundle Resources.
+Once the `Linkmap.txt` file exists, it needs to be included as a resource in your UI test target. Add it in the build phases for your target under Copy Bundle Resources.
 
 <img src="images/copy.png" width="600" alt="Copy Bundle Resources">
 
