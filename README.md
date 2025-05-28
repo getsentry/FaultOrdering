@@ -8,17 +8,9 @@ file by launching the app in an XCUITest. Read all about how order files work in
 Create a UI testing target using XCUITest. Add the package dependency to your Xcode project using the URL of this repository (https://github.com/getsentry/FaultOrdering).
 Add `FaultOrderingTests` and `FaultOrdering` as a dependency of your new UI test target.
 
-## Usage
-
-This is a multi-step process:
-
-1. Generate a linkmap file for your main app
-2. Copy that linkmap file into the UI test bundle resources
-3. Setup and run the UI test, which then outputs the final order file
-
 ### Generating the linkmap
 
-To use this package you'll need to generate a linkmap for your main app binary. In your app's Xcode target, set the following build settings:
+To use this package you'll need to tell Xcode to generate a linkmap for your main app binary. In your app's Xcode target, set the following build settings:
 
 ```
 LD_GENERATE_MAP_FILE = YES
@@ -44,7 +36,7 @@ Confirm your selection and <strong>do not</strong> check the box to copy the fil
 > [!IMPORTANT]
 > The generated Linkmap.txt file must be included in your UI test target. You don't need to specificly use `"$(PROJECT_DIR)/Linkmap.txt"` as the path, only that whatever the `LD_MAP_FILE_PATH` is set is also the file that you include in Copy Bundle Resources.
 
-### Running the test
+## Usage
 
 In a UI test, create an instance of `FaultOrderingTest` and optionally provide a closure to perform any required app setup. For example, you may want to log in to the app since that's the most common code path for the majority of your app users. The test case can then be executed.
 
