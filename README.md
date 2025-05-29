@@ -3,18 +3,20 @@
 Order files can reduce app startup time by co-locating symbols that are accessed during app launch, reducing the number of page faults from the app. This package generates an order
 file by launching the app in an XCUITest. Read all about how order files work in [our blog post](https://www.emergetools.com/blog/posts/FasterAppStartupOrderFiles).
 
-Setting up your app for order files requires 2 steps:
+## Setup
 
-1. Generate an order file as part of an XCUITest. FaultOrdering instruments app launch in the UI test and uses the results to generate an optimized order file.
+Setting up your app to use order files requires 2 general steps:
+
+1. Generate an order file from an XCUITest. `FaultOrdering` instruments app launch in the UI test and uses the results to generate an optimized order file.
 2. Once the order file is generated, build the app again, this time passing the order file as an option to the linker.
 
-## Package installation
+### Package installation
 
 - Create a UI testing target using XCUITest.
 - Add https://github.com/getsentry/FaultOrdering to your project via Swift Package Manager.
 - Add `FaultOrderingTests` and `FaultOrdering` as dependencies of your new UI test target.
 
-## Generating the linkmap
+### Generating the linkmap
 
 In your app's Xcode target, set the following build settings:
 
@@ -27,7 +29,7 @@ After adding these settings, make sure to build your app and verify the file exi
 
 > [!NOTE] We recommend using `$(PROJECT_DIR)` so that it generates within your project directory instead of derived data, but this can be changed to whatever makes sense for your setup.
 
-## Including the linkmap
+### Including the linkmap
 
 Add `Linkmap.txt` in the build phases for your UI test target under Copy Bundle Resources.
 
