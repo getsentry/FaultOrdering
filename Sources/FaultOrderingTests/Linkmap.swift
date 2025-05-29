@@ -46,7 +46,7 @@ func getLinkmap() throws -> [Int: Symbol] {
       fclose(file)
   }
   
-  var buffer = [CChar](repeating: 0, count: 256)
+  var buffer = [CChar](repeating: 0, count: 512)
   var inTextSection = false
   var inSections = false
   var inObjectFiles = false
@@ -56,8 +56,8 @@ func getLinkmap() throws -> [Int: Symbol] {
   var objects = [ObjectFile]()
   while fgets(&buffer, Int32(buffer.count), file) != nil {
     // If buffer is completely full, skip (line too long)
-    if buffer[255] != 0 {
-      buffer = [CChar](repeating: 0, count: 256)
+    if buffer[511] != 0 {
+      buffer = [CChar](repeating: 0, count: 512)
       continue
     }
     
@@ -115,12 +115,14 @@ func getLinkmap() throws -> [Int: Symbol] {
         textSectionSize = UInt64(components[1].dropFirst(2), radix: 16) ?? 0
       }
     } else if inObjectFiles {
-      let line = line[line.index(line.index(of: "]")!, offsetBy: 2)...]
-      if let match = try? /^(.*?)(?:\((.*)\))?$/.firstMatch(in: line) {
-        if let file = match.2.map { String($0) } {
-          objects.append(ObjectFile(file: file, library: String(match.1)))
-        } else {
-          objects.append(ObjectFile(file: String(match.1), library: nil))
+      if let bracketIndex = line.index(of: "]") {
+        let line = line[line.index(bracketIndex, offsetBy: 2)...]
+        if let match = try? /^(.*?)(?:\((.*)\))?$/.firstMatch(in: line) {
+          if let file = match.2.map { String($0) } {
+            objects.append(ObjectFile(file: file, library: String(match.1)))
+          } else {
+            objects.append(ObjectFile(file: String(match.1), library: nil))
+          }
         }
       }
     }
