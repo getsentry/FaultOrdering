@@ -42,7 +42,7 @@ Confirm your selection and <strong>do not</strong> check the box to copy the fil
 
 ## Usage
 
-In a UI test, create an instance of `FaultOrderingTest` and optionally provide a closure to perform any required app setup. For example, you may want to log in to the app since that's the most common code path for the majority of your app users. The test case can then be executed.
+In a UI test, create an instance of `FaultOrderingTest` and optionally provide a closure to perform any necessary app setup. In most cases, this should include logging in to the app. Centering your UI test around a fully logged in session is strongly recommended, not only because it optimizes for the most common user experience, but also because it significantly improves the efficacy of this tool. By logging in, you allow much more of the app’s initial code to execute within the test context, allowing for a greater number of page fault reductions. The test case can then be executed.
 
 Example:
 
