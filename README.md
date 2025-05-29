@@ -3,6 +3,10 @@
 Order files can reduce app startup time by co-locating symbols that are accessed during app launch, reducing the number of page faults from the app. This package generates an order
 file by launching the app in an XCUITest. Read all about how order files work in [our blog post](https://www.emergetools.com/blog/posts/FasterAppStartupOrderFiles).
 
+Setting up your app for order files requires 2 steps:
+1 - Use this library to generate an order file as part of your XCUITest. The library instruments app launch in the UI test and uses the results to generate an optimized order file
+2 - Re-build the app with the order file. Once the order file is generated you build the app again, this time passing the order file as an option to the linker.
+
 ## Installation
 
 Create a UI testing target using XCUITest. Add the package dependency to your Xcode project using the URL of this repository (https://github.com/getsentry/FaultOrdering).
@@ -50,10 +54,17 @@ let test = FaultOrderingTest { app in
 test.testApp(testCase: self, app: app)
 ```
 
+> [!IMPORTANT]
+> This test should be run with a release build configuration, using the same compiler/linker optimizations that you would use on the App Store.
+
 ### Accessing results
 
 Results are added as a XCTAttachment named `"order-file"`.
 
 ### Device support
 
-To run on a physical device the app must link to the `FaultOrdering` product from this package. Update your main app target to have this framework in it's embedded frameworks.
+To run on a physical device the app must link to the `FaultOrdering` product from this package. Update your main app target to have this framework in it's embedded frameworks. If your app takes a different codepath on physical devices than simulators (such as using device only frameworks like Metal) it is best to generate an order file while running on the physical device.
+
+## Using the order file
+
+Once you run the UI test to generate an order file you have to use this file as an input to a new build of the app. Technically you only need to re-link the app, not re-compile everything, but running a new build with xcode is the easiest way to do this. Set the xcode build setting "ORDER_FILE" to the path to your order file when you build the app.
