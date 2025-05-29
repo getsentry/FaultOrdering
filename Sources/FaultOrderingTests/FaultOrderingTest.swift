@@ -64,6 +64,7 @@ public class FaultOrderingTest {
     app.launch()
     setup(app)
 
+    print("Waiting for 10s for app to receive the linkmap")
     // Give the app some time to settle and write the order file
     sleep(10)
 
@@ -76,6 +77,7 @@ public class FaultOrderingTest {
     guard let url = URL(string: "http://localhost:38824/file") else {
       preconditionFailure("Invalid URL")
     }
+    print("Waiting for 120s to give the app time to run post-launch")
     // Give the app time to run and prepare the used addresses
     sleep(120)
 
