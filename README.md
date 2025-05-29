@@ -8,7 +8,7 @@ Setting up your app for order files requires 2 steps:
 1. Generate an order file as part of an XCUITest. FaultOrdering instruments app launch in the UI test and uses the results to generate an optimized order file.
 2. Once the order file is generated, build the app again, this time passing the order file as an option to the linker.
 
-## Package Installation
+## Package installation
 
 - Create a UI testing target using XCUITest.
 - Add https://github.com/getsentry/FaultOrdering to your project via Swift Package Manager.
