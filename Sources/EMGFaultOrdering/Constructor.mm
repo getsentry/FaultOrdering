@@ -5,6 +5,8 @@
 //  Created by Noah Martin on 8/1/21.
 //
 
+#if defined(__arm64__) || defined(__aarch64__)
+
 #import <Foundation/Foundation.h>
 #import <vector>
 #import <mach/mach.h>
@@ -242,3 +244,5 @@ __attribute__((constructor)) void setup() {
   usleep(500000);
   _dyld_register_func_for_add_image(image_added);
 }
+
+#endif

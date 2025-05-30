@@ -8,6 +8,8 @@
 @import UIKit;
 @import FaultOrderingSwift;
 
+#import "EMGObjCHelper.h"
+
 @implementation EMGObjCHelper
 
 + (NSObject*)startServerWithCallback:(NSData* (^)())callback {
