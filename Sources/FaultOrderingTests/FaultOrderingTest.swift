@@ -149,7 +149,7 @@ public class FaultOrderingTest {
       }
     }
     let remainingSymbols = Set(linkmap.values).subtracting(usedSymbols)
-    orderFileContents.append("# begin remaining symbol")
+    orderFileContents.append("# begin remaining symbols")
     for s in remainingSymbols {
       addSymbol(s)
     }

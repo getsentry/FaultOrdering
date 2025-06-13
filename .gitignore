@@ -1,2 +1,5 @@
 .DS_Store
 .swiftpm
+xcuserdata
+Demos/DemoApp/Linkmap.txt
+
