@@ -81,7 +81,10 @@ To run on a physical device, the app must link to the `FaultOrdering` product fr
 
 ## Accessing results
 
-After running the UI test, the order file will will appear as an XCTAttachment named `"order-file"`.
+After running the UI test, the order file will will appear as an XCTAttachment named `"order-file"`. You can open the `.xcresult` file in Xcode to see the file, or extract it programatically with 
+```bash
+xcrun xcresulttool export attachments --path /path/to/your_test.xcresult --output-path out_dir
+```
 
 ## Using the order file
 
