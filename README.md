@@ -27,13 +27,15 @@ LD_MAP_FILE_PATH = $(PROJECT_DIR)/Linkmap.txt
 
 After adding these settings, make sure to build your app and verify the file exists.
 
-> [!NOTE] We recommend using `$(PROJECT_DIR)` so that it generates within your project directory instead of derived data, but this can be changed to whatever makes sense for your setup.
+> [!NOTE]
+> We recommend using `$(PROJECT_DIR)` so that it generates within your project directory instead of derived data, but this can be changed to whatever makes sense for your setup.
 
 ### Including the linkmap
 
 Add `Linkmap.txt` in the build phases for your UI test target under Copy Bundle Resources.
 
-> [!IMPORTANT] Do **not** check the box to copy the file.
+> [!IMPORTANT]
+> Do **not** check the box to copy the file.
 
 <img src="images/copy.png" width="600" alt="Copy Bundle Resources">
 
@@ -50,7 +52,8 @@ Confirm your selection and <strong>do not</strong> check the box to copy the fil
 
 In a UI test case, create an instance of `FaultOrderingTest` and optionally provide a closure to perform any necessary app setup. 
 
-> [!TIP] In most cases, this should include logging in to the app. Centering your UI test around a fully logged in session is strongly recommended, not only because it optimizes for the most common user experience, but also because it significantly improves the efficacy of this tool. By logging in, you allow much more of the app’s initial code to execute within the test context, allowing for a greater number of page fault reductions.
+> [!TIP]
+> In most cases, this should include logging in to the app. Centering your UI test around a fully logged in session is strongly recommended, not only because it optimizes for the most common user experience, but also because it significantly improves the efficacy of this tool. By logging in, you allow much more of the app’s initial code to execute within the test context, allowing for a greater number of page fault reductions.
 
 Example:
 
@@ -90,4 +93,5 @@ xcrun xcresulttool export attachments --path /path/to/your_test.xcresult --outpu
 
 In your app target's build settings, set "ORDER_FILE" to the path to your order file and rebuild the app.
 
-> [!TIP] Technically, the app only needs to be relinked to include the order file, as it has no effect on compilation of source code, but it may be easier to simply rebuild the entire app target.
+> [!TIP]
+> Technically, the app only needs to be relinked to include the order file, as it has no effect on compilation of source code, but it may be easier to simply rebuild the entire app target.
