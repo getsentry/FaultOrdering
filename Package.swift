@@ -9,7 +9,7 @@ let package = Package(
         .library(name: "FaultOrderingTests", targets: ["FaultOrderingTests"]),
     ],
     dependencies: [
-      .package(url: "https://github.com/EmergeTools/SimpleDebugger", revision: "e0ad1cd304132efa0ab3b4707bd0eea761dbe2b5"),
+      .package(url: "https://github.com/EmergeTools/SimpleDebugger", exact: "1.0.0"),
       .package(url: "https://github.com/swhitty/FlyingFox.git", exact: "0.16.0"),
     ],
     targets: [
