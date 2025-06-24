@@ -1,5 +1,5 @@
 {
-  "originHash" : "56a9cee4b3038e46a11cef8f247e9ec1f834219812470b0332fd30b6b7a780dc",
+  "originHash" : "838fabe2d3673b7e608d74662a6c2a5e52588a0198889b11041ec65d6e0aba91",
   "pins" : [
     {
       "identity" : "flyingfox",
@@ -15,7 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/EmergeTools/SimpleDebugger",
       "state" : {
-        "revision" : "e0ad1cd304132efa0ab3b4707bd0eea761dbe2b5"
+        "revision" : "f065263eb5db95874b690408d136b573c939db9e",
+        "version" : "1.0.0"
       }
     }
   ],
