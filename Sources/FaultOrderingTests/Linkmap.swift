@@ -77,7 +77,7 @@ func getLinkmap() throws -> [Int: Symbol] {
           continue
       }
       
-      var components = line.split(separator: "\t", maxSplits: 2).map(String.init)
+        let components = line.split(separator: "\t", maxSplits: 2).map(String.init)
       guard components.count == 3 else {
           continue
       }
@@ -107,7 +107,7 @@ func getLinkmap() throws -> [Int: Symbol] {
       }
     } else if inSections {
       if line.contains("__TEXT\t__text") {
-        var components = line.split(separator: "\t", maxSplits: 2).map(String.init)
+          let components = line.split(separator: "\t", maxSplits: 2).map(String.init)
         guard components.count == 3 else {
           continue
         }
@@ -115,10 +115,10 @@ func getLinkmap() throws -> [Int: Symbol] {
         textSectionSize = UInt64(components[1].dropFirst(2), radix: 16) ?? 0
       }
     } else if inObjectFiles {
-      if let bracketIndex = line.index(of: "]") {
+        if let bracketIndex = line.firstIndex(of: "]") {
         let line = line[line.index(bracketIndex, offsetBy: 2)...]
         if let match = try? /^(.*?)(?:\((.*)\))?$/.firstMatch(in: line) {
-          if let file = match.2.map { String($0) } {
+            if let file = match.2.map({ String($0) }) {
             objects.append(ObjectFile(file: file, library: String(match.1)))
           } else {
             objects.append(ObjectFile(file: String(match.1), library: nil))
