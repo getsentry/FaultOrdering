@@ -50,7 +50,7 @@ public class FaultOrderingTest {
   private func getUsedAddresses(app: XCUIApplication, addresses: [Int]) -> Result {
     let data = try! JSONEncoder().encode(addresses)
     // Make the linkmap available to the app
-    let s = Server(callback: { return data })
+      _ = Server(callback: { return data })
 
     // Launch the app for setup
     var launchEnvironment = app.launchEnvironment

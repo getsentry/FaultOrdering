@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "FaultOrdering",
-    platforms: [.iOS(.v17)],
+    platforms: [.iOS(.v17), .macOS(.v13)],
     products: [
         .library(name: "FaultOrdering", type: .dynamic, targets: ["FaultOrdering"]),
         .library(name: "FaultOrderingTests", targets: ["FaultOrderingTests"]),
