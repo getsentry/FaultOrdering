@@ -4,8 +4,7 @@ Order files can reduce app startup time by co-locating symbols that are accessed
 file by launching the app in an XCUITest. Read all about how order files work in [our blog post](https://www.emergetools.com/blog/posts/FasterAppStartupOrderFiles).
 
 ## Setup
-
-Setting up your app to use order files requires 2 general steps:
+This package requires Xcode 16.2 or later. Setting up your app to use order files requires 2 general steps:
 
 1. Generate an order file from an XCUITest. `FaultOrdering` instruments app launch in the UI test and uses the results to generate an optimized order file.
 2. Once the order file is generated, build the app again, this time passing the order file as an option to the linker.
