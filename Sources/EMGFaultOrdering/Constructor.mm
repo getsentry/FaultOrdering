@@ -12,6 +12,7 @@
 #import <mach/mach.h>
 #import <mach-o/dyld.h>
 #import <mach-o/dyld_images.h>
+#import <sys/utsname.h>
 #import <dlfcn.h>
 #import <libgen.h>
 #import <mach-o/getsect.h>
@@ -59,6 +60,13 @@ NSData* getAddresses() {
   };
   
   return [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
+}
+
+bool isSimulator(void) {
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *machine = [NSString stringWithUTF8String:systemInfo.machine];
+    return [machine containsString:@"x86_64"] || [machine containsString:@"arm64"];
 }
 
 bool isDebuggerAttached() {
@@ -237,7 +245,7 @@ __attribute__((constructor)) void setup() {
     return getAddresses();
   }];
 
-  if (!isDebuggerAttached()) {
+  if (!isSimulator() && !isDebuggerAttached()) {
     printf("The debugger is not attached\n");
     abort();
   }
